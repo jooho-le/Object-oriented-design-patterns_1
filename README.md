@@ -1,10 +1,10 @@
 # 디자인 패턴 데모 — Vue 3 + TypeScript
 
-Vue 3 + TypeScript로 세 가지 분류에서 각 1개씩 구현했습니다.
+요청에 따라 아래 3가지 패턴을 시연합니다.
 
-- 생성(Creational): Factory Method
-- 구조(Structural): Adapter
-- 행위(Behavioral): Strategy
+- 생성(Creational): Builder (빌더)
+- 구조(Structural): Decorator (데코레이터)
+- 행위(Behavioral): Strategy (전략)
 
 ## 실행 방법
 
@@ -17,24 +17,23 @@ npm run dev
 
 브라우저에서 `http://localhost:5173` 접속 후 각 섹션을 조작하여 동작을 확인하세요.
 
-## 1) Factory Method
+## 1) Builder
 
-- `src/factory/Product.ts`: Product 인터페이스(`Button`)
-- `src/factory/Creator.ts`: 추상 Creator(`Dialog`), `createButton()` 팩토리 메서드
-- `src/factory/ConcreteProducts.ts`: 구상 Product(`HtmlButton`, `WindowsButton`)
-- `src/factory/ConcreteCreators.ts`: 구상 Creator(`WebDialog`, `WindowsDialog`)
+- `src/builder/ReportBuilder.ts`:
+  - 인터페이스 `ReportBuilder`
+  - 구상 빌더 `MarkdownReportBuilder`, `HtmlReportBuilder`
+  - 디렉터 `ReportDirector`
 
-핵심: 클라이언트는 추상 `Dialog`에 의존하고, 인스턴스 생성은 팩토리 메서드에 위임됩니다.
+핵심: 빌드 절차(제목 설정 → 섹션 추가)를 디렉터가 캡슐화, 빌더 교체만으로 산출물(Markdown/HTML)을 변경.
 
-## 2) Adapter
+## 2) Decorator
 
-- `src/adapter/Notifier.ts`: Target 인터페이스(`Notifier`)
-- `src/adapter/ConcreteTargets.ts`:
-  - `ConsoleNotifier`(Target 구현)
-  - `LegacyLogger`(Adaptee)
-  - `LegacyLoggerAdapter`(Adapter)
+- `src/decorator/TextDecorator.ts`:
+  - 컴포넌트 `TextComponent` / `PlainText`
+  - 데코레이터 베이스 `TextDecorator`
+  - 구상 데코레이터 `BoldDecorator`, `ItalicDecorator`, `EmojiDecorator`
 
-핵심: 호환되지 않는 `LegacyLogger`를 `Notifier` 인터페이스에 맞춰 변환합니다.
+핵심: 런타임에 꾸미기 기능을 조합해 문자열 렌더링 결과를 확장합니다.
 
 ## 3) Strategy
 

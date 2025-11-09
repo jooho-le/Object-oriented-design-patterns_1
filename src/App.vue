@@ -3,41 +3,35 @@
     <h1>Design Patterns Demo (Vue + TypeScript)</h1>
 
     <section class="section">
-      <h2>1) Factory Method</h2>
+      <h2>1) Builder</h2>
       <div class="controls">
         <label>
-          Creator 선택:
-          <select v-model="factorySelected">
-            <option value="web">WebDialog</option>
-            <option value="windows">WindowsDialog</option>
+          Builder 선택:
+          <select v-model="builderSelected">
+            <option value="md">Markdown</option>
+            <option value="html">HTML</option>
           </select>
         </label>
       </div>
       <div class="preview">
-        <p class="hint">Creator가 Factory Method로 Product(Button)를 생성합니다.</p>
-        <button :class="['app-btn', factorySelected]" @click="onFactoryClick">
-          {{ factoryLabel }}
-        </button>
-        <p class="message">{{ factoryMessage }}</p>
+        <input class="text" v-model="builderTitle" placeholder="제목 입력" />
+        <button class="app-btn web" @click="onBuild">Build Report</button>
+        <p class="message"><span v-if="builderSelected==='md'">(Markdown)</span><span v-else>(HTML)</span></p>
+        <pre class="code-block">{{ builtReport }}</pre>
       </div>
     </section>
 
     <section class="section">
-      <h2>2) Adapter</h2>
+      <h2>2) Decorator</h2>
       <div class="controls">
-        <label>
-          Notifier 선택:
-          <select v-model="adapterSelected">
-            <option value="console">ConsoleNotifier</option>
-            <option value="legacy-info">LegacyLoggerAdapter (info)</option>
-            <option value="legacy-warn">LegacyLoggerAdapter (warn)</option>
-          </select>
-        </label>
+        <input class="text" v-model="decoratorInput" placeholder="텍스트 입력" />
+        <label><input type="checkbox" v-model="useBold" /> Bold</label>
+        <label><input type="checkbox" v-model="useItalic" /> Italic</label>
+        <label><input type="checkbox" v-model="useEmoji" /> Emoji</label>
       </div>
       <div class="preview">
-        <input class="text" v-model="adapterInput" placeholder="메시지를 입력" />
-        <button class="app-btn web" @click="onNotify">Notify</button>
-        <p class="message">{{ adapterMessage }}</p>
+        <button class="app-btn windows" @click="onDecorate">Decorate</button>
+        <p class="message">{{ decorated }}</p>
       </div>
     </section>
 
@@ -64,40 +58,33 @@
 
 <script setup lang="ts">
 import { computed, ref, watchEffect } from 'vue';
-import { WebDialog, WindowsDialog } from './factory/ConcreteCreators';
-import type { Dialog } from './factory/Creator';
-import { ConsoleNotifier, LegacyLogger, LegacyLoggerAdapter } from './adapter/ConcreteTargets';
-import type { Notifier } from './adapter/Notifier';
 import { TextContext, UpperCaseFormatter, LowerCaseFormatter, TitleCaseFormatter } from './strategy/TextStrategy';
+import { HtmlReportBuilder, MarkdownReportBuilder, ReportDirector } from './builder/ReportBuilder';
+import { BoldDecorator, EmojiDecorator, ItalicDecorator, PlainText } from './decorator/TextDecorator';
 
-// Factory Method state
-type Kind = 'web' | 'windows';
-const factorySelected = ref<Kind>('web');
-const factoryDialog = computed<Dialog>(() => (factorySelected.value === 'web' ? new WebDialog() : new WindowsDialog()));
-const factoryLabel = ref('');
-const factoryMessage = ref('');
-watchEffect(() => {
-  const { label: l } = factoryDialog.value.render();
-  factoryLabel.value = l;
-  factoryMessage.value = '(버튼을 클릭해 동작 메시지를 확인)';
-});
-function onFactoryClick() {
-  const { messageOnClick } = factoryDialog.value.render();
-  factoryMessage.value = messageOnClick;
+// Builder state
+type BuilderKind = 'md' | 'html';
+const builderSelected = ref<BuilderKind>('md');
+const builderTitle = ref('My Report');
+const builtReport = ref('');
+function onBuild() {
+  const builder = builderSelected.value === 'md' ? new MarkdownReportBuilder() : new HtmlReportBuilder();
+  const director = new ReportDirector(builder);
+  builtReport.value = director.constructQuickStart(builderTitle.value || 'Untitled');
 }
 
-// Adapter state
-type AdapterKind = 'console' | 'legacy-info' | 'legacy-warn';
-const adapterSelected = ref<AdapterKind>('console');
-const adapterInput = ref('Hello Adapter');
-const adapter = computed<Notifier>(() => {
-  if (adapterSelected.value === 'console') return new ConsoleNotifier();
-  const legacy = new LegacyLogger();
-  return new LegacyLoggerAdapter(legacy, adapterSelected.value === 'legacy-warn' ? 'warn' : 'info');
-});
-const adapterMessage = ref('');
-function onNotify() {
-  adapterMessage.value = adapter.value.notify(adapterInput.value || '(empty)');
+// Decorator state
+const decoratorInput = ref('decorate me');
+const useBold = ref(true);
+const useItalic = ref(false);
+const useEmoji = ref(true);
+const decorated = ref('');
+function onDecorate() {
+  let component = new PlainText(decoratorInput.value || '');
+  if (useBold.value) component = new BoldDecorator(component);
+  if (useItalic.value) component = new ItalicDecorator(component);
+  if (useEmoji.value) component = new EmojiDecorator(component, '✨');
+  decorated.value = component.render();
 }
 
 // Strategy state
@@ -164,6 +151,7 @@ h1 {
 .message {
   min-height: 1.5rem;
 }
+.code-block { background: #0b1220; color: #e5e7eb; padding: 0.75rem; border-radius: 8px; white-space: pre-wrap; }
 .text { padding: 0.5rem 0.6rem; border: 1px solid #e5e7eb; border-radius: 6px; }
 code {
   background: #f3f4f6;
